@@ -1,0 +1,71 @@
+- name: Clone repository from GitHub
+  delegate_to: localhost
+  git:
+    repo: "{{ repo }}"
+    dest: "/tmp/paleo.io"
+    clone: yes
+    update: yes
+
+- name: Ensure that paleo.io exists
+  file:
+    path: "/home/{{ ansible_user }}/paleo.io"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Upload docker compose config
+  copy:
+    src: /tmp/paleo.io/docker-compose.yml
+    dest: "{{ deployment_root }}/docker-compose.yml"
+  notify:
+    - Restart paleio.io
+
+
+- name: Create .env file from template
+  template:
+    src: templates/env.j2
+    dest: "/home/{{ ansible_user }}/paleo.io/.env"
+    mode: '0644'
+  notify:
+    - Restart paleio.io
+
+- name: Upload nginx configs
+  become: true
+  copy:
+    src: /tmp/paleo.io/etc/nginx/
+    dest: "/etc/nginx/conf.d/"
+  notify:
+    - Restart nginx
+
+- name: Create the nginx builds directory
+  become: true
+  file:
+    path: "{{ nginx_builds_root }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: wwwdata
+    mode: '0775'
+
+- name: Validate nginx config
+  become: true
+  shell: nginx -t
+
+- name: login
+  shell: |
+    echo "{{ docker_hub.password }}" | docker login ghcr.io --username {{ docker_hub.username }} --password-stdin
+  no_log: true
+
+- name: Ensure that systemd dir exists
+  file:
+    path: "/home/{{ ansible_user }}/.config/systemd/user/"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Create paleo.io systemd service file
+  template:
+    src: "paleio.io.service.j2"
+    dest: "/home/{{ ansible_user }}/.config/systemd/user/{{ service_name }}.service"
+    mode: "0644"
+  notify:
+    - Reload paleio.io

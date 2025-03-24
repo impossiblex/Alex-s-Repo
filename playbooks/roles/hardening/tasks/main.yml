@@ -1,0 +1,58 @@
+---
+- name: Install Fail2ban and UFW
+  become: true
+  dnf:
+    name:
+      - fail2ban
+      - ufw
+    state: present
+
+- name: Configure Fail2ban local jail
+  become: true
+  copy:
+    dest: /etc/fail2ban/jail.local
+    content: |
+      [sshd]
+      enabled = true
+      banaction = iptables-multiport
+
+- name: Enable and start Fail2ban
+  become: true
+  systemd:
+    name: fail2ban
+    state: started
+    enabled: yes
+
+- name: Setup UFW rules
+  become: true
+  ufw:
+    rule: allow
+    name: "{{ item }}"
+  loop:
+    - "SSH"
+    - "WWW Full"
+  ignore_errors: yes
+
+- name: Enable UFW
+  become: true
+  ufw:
+    state: enabled
+
+- name: Harden SSH configuration
+  become: true
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?{{ item.regexp }}'
+    line: '{{ item.line }}'
+  loop:
+    - { regexp: 'PermitRootLogin', line: 'PermitRootLogin no' }
+    - { regexp: 'PasswordAuthentication', line: 'PasswordAuthentication no' }
+    - { regexp: 'KbdInteractiveAuthentication', line: 'KbdInteractiveAuthentication no' }
+    - { regexp: 'ChallengeResponseAuthentication', line: 'ChallengeResponseAuthentication no' }
+    - { regexp: 'MaxAuthTries', line: 'MaxAuthTries 2' }
+    - { regexp: 'AllowTcpForwarding', line: 'AllowTcpForwarding no' }
+    - { regexp: 'X11Forwarding', line: 'X11Forwarding no' }
+    - { regexp: 'AllowAgentForwarding', line: 'AllowAgentForwarding no' }
+    - { regexp: 'AuthorizedKeysFile', line: 'AuthorizedKeysFile .ssh/authorized_keys' }
+  notify:
+    - Restart SSH

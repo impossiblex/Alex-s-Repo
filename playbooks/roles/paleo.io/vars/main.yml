@@ -1,0 +1,3 @@
+repo: git@github.com:impossiblex/paleoio-backend.git
+deployment_root: /home/dubadub/paleo.io
+service_name: paleo.io

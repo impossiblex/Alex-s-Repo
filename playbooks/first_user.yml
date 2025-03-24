@@ -1,0 +1,5 @@
+- hosts: all
+  vars:
+    ansible_user: root
+  roles:
+    - first_user

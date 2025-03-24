@@ -1,0 +1,2 @@
+[web]
+ssh.joelr29.sg-host.com ansible_user=u2649-s36cujynnyak ansible_port=18765

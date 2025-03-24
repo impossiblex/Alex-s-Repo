@@ -1,0 +1,2 @@
+user_name: "dubadub"
+user_password: "{{ lookup('env','DUBADUB_PASS') }}"

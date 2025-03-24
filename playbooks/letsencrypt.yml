@@ -1,0 +1,5 @@
+- hosts: web,support
+  roles:
+    - letsencrypt
+  vars:
+    ansible_sudo_pass: "{{ lookup('env','DUBADUB_PASS') }}"

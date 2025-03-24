@@ -1,0 +1,55 @@
+- name: Install Certbot
+  become: true
+  dnf:
+    name:
+      - certbot
+      - python3-certbot-nginx
+    state: present
+
+- name: Generate SSL certificate for
+  become: true
+  shell: |
+    certbot certonly --nginx -d {{ item }} --non-interactive --agree-tos --email {{ letsencrypt.email }}
+  args:
+    creates: /etc/letsencrypt/live/{{ item }}/fullchain.pem
+  loop: "{{ letsencrypt.domains }}"
+
+- name: Create certbot renewal service file
+  become: true
+  copy:
+    dest: /etc/systemd/system/certbot-renewal.service
+    content: |
+      [Unit]
+      Description=Certbot Renewal Service
+      After=network-online.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/bin/certbot renew --quiet --post-hook "systemctl reload nginx"
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Create certbot renewal timer file
+  become: true
+  copy:
+    dest: /etc/systemd/system/certbot-renewal.timer
+    content: |
+      [Unit]
+      Description=Timer for Certbot Renewal
+
+      [Timer]
+      OnCalendar=daily
+      RandomizedDelaySec=3600
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+
+- name: Start and enable certbot renewal timer
+  become: true
+  systemd:
+    name: certbot-renewal.timer
+    state: started
+    enabled: yes
+    daemon_reload: yes

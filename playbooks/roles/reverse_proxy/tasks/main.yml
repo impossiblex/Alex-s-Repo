@@ -1,0 +1,58 @@
+---
+- name: Install Nginx
+  become: yes
+  dnf:
+    name: nginx
+    state: present
+
+- name: Start and enable Nginx service
+  become: yes
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Upload nginx config
+  become: true
+  copy:
+    src: nginx.conf
+    dest: "/etc/nginx/nginx.conf"
+  notify:
+    - Restart nginx
+
+- name: Validate nginx config
+  become: true
+  shell: nginx -t
+
+
+- name: Add user nginx to wwwdata group
+  become: yes
+  user:
+    name: nginx
+    groups: wwwdata
+    append: yes
+
+
+- name: Ensure firewalld is running
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: Allow HTTP (port 80)
+  ansible.posix.firewalld:
+    service: http
+    permanent: yes
+    state: enabled
+    immediate: yes
+
+- name: Allow HTTPS (port 443)
+  ansible.posix.firewalld:
+    service: https
+    permanent: yes
+    state: enabled
+    immediate: yes
+
+- name: Reload firewalld
+  ansible.builtin.command:
+    cmd: firewall-cmd --reload

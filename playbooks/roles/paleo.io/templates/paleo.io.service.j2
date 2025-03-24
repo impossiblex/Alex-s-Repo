@@ -1,0 +1,10 @@
+[Unit]
+Description=%i service with docker compose
+
+[Service]
+WorkingDirectory={{ deployment_root }}
+ExecStart=/usr/bin/docker compose up --remove-orphans
+ExecStop=/usr/bin/docker compose down
+
+[Install]
+WantedBy=default.target

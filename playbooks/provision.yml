@@ -1,0 +1,9 @@
+- hosts: web,support
+  roles:
+    - hardening
+    - reverse_proxy
+    - essential_packages
+    - letsencrypt
+    - docker
+  vars:
+    ansible_sudo_pass: "{{ lookup('env','DUBADUB_PASS') }}"

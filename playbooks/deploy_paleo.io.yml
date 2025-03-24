@@ -1,0 +1,11 @@
+- hosts: web
+  roles:
+    - paleo.io
+  vars:
+    docker_hub:
+      username: dubadub
+      password: "{{ lookup('env','DOCKER_REGISTRY_PASS') }}"
+    ansible_sudo_pass: "{{ lookup('env','DUBADUB_PASS') }}"
+    env_vars:
+      SECRET_KEY: "{{ lookup('env', 'PALEOIO_SECRET_KEY') }}"
+

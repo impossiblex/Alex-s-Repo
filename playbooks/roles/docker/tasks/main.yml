@@ -1,0 +1,32 @@
+---
+- name: Make sure dnf-plugins.core installed
+  become: yes
+  dnf:
+    name: dnf-plugins-core
+    state: present
+
+- name: Install docker repository
+  become: yes
+  command: dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+
+- name: Install docker
+  become: yes
+  dnf:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - docker-ce
+
+- name: Start Docker service
+  become: yes
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Add user dubadub to docker group
+  become: yes
+  user:
+    name: dubadub
+    groups: docker
+    append: yes

@@ -1,0 +1,4 @@
+letsencrypt:
+  domains:
+    - api.paleo.io
+  email: alex@mealmanifest.com

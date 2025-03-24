@@ -1,0 +1,61 @@
+---
+- name: Check if user already exists
+  command: id "{{ user_name }}"
+  register: user_exists
+  ignore_errors: yes
+  when: user_exists is failed
+
+- name: Ensure group "dubadub" exists
+  group:
+    name: dubadub
+    state: present
+
+- name: Ensure group "wwwdata" exists
+  group:
+    name: wwwdata
+    state: present
+
+- name: Create a new user
+  user:
+    name: "{{ user_name }}"
+    password: "{{ user_password | password_hash('sha512') }}"
+    shell: /bin/bash
+    create_home: yes
+    group: dubadub
+    groups: wheel,wwwdata
+  when: user_exists is failed
+
+- name: Add user to sudoers
+  lineinfile:
+    path: /etc/sudoers
+    state: present
+    line: "{{ user_name }} ALL=(ALL) NOPASSWD: ALL"
+    create: yes
+    validate: 'visudo -cf %s'
+  when: user_exists is failed
+
+- name: Ensure that .ssh exists
+  file:
+    path: "/home/{{ user_name }}/.ssh"
+    state: directory
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: 0700
+  when: user_exists is failed
+
+- name: SSH keys
+  import_tasks: roles/ssh_keys/tasks/main.yml
+
+- name: Allow in SSH configuration
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?{{ item.regexp }}'
+    line: '{{ item.line }}'
+  loop:
+    - { regexp: 'AllowUsers', line: "AllowUsers {{ user_name }}" }
+  notify:
+    - Restart SSH
+
+- name: Enable Lingering for dubadub
+  shell: |
+    loginctl enable-linger dubadub

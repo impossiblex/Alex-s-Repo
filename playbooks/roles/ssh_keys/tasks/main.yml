@@ -1,0 +1,8 @@
+- name: Copy ssh keys
+  copy:
+    src: authorized_keys
+    dest: /home/dubadub/.ssh/authorized_keys
+    owner: dubadub
+    group: dubadub
+    mode: '0600'
+
