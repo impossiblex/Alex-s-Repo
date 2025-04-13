@@ -1,2 +1,2 @@
 [web]
-api.paleo.io ansible_user=dubadub ansible_port=22
+159.223.157.156 ansible_user=dubadub ansible_port=22
