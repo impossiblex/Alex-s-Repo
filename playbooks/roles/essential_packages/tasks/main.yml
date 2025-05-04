@@ -1,9 +1,8 @@
 ---
 - name: Install essential packages
   become: yes
-  dnf:
-    name:
-      - git
-      - tree
-    state: present
+  shell: |
+    dnf install -y git tree vim-enhanced curl wget htop tmux
+  args:
+    executable: /bin/bash
 

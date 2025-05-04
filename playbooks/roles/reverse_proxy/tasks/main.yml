@@ -1,9 +1,10 @@
 ---
 - name: Install Nginx
   become: yes
-  dnf:
-    name: nginx
-    state: present
+  shell: |
+    dnf install -y nginx
+  args:
+    executable: /bin/bash
 
 - name: Start and enable Nginx service
   become: yes
@@ -11,6 +12,13 @@
     name: nginx
     state: started
     enabled: yes
+
+- name: Configure SELinux for nginx network access
+  become: yes
+  shell: |
+    setsebool -P httpd_can_network_connect 1
+  args:
+    executable: /bin/bash
 
 - name: Upload nginx config
   become: true
@@ -23,7 +31,8 @@
 - name: Validate nginx config
   become: true
   shell: nginx -t
-
+  args:
+    executable: /bin/bash
 
 - name: Add user nginx to wwwdata group
   become: yes
@@ -32,27 +41,18 @@
     groups: wwwdata
     append: yes
 
-
 - name: Ensure firewalld is running
-  ansible.builtin.service:
+  become: yes
+  service:
     name: firewalld
     state: started
     enabled: yes
 
-- name: Allow HTTP (port 80)
-  ansible.posix.firewalld:
-    service: http
-    permanent: yes
-    state: enabled
-    immediate: yes
-
-- name: Allow HTTPS (port 443)
-  ansible.posix.firewalld:
-    service: https
-    permanent: yes
-    state: enabled
-    immediate: yes
-
-- name: Reload firewalld
-  ansible.builtin.command:
-    cmd: firewall-cmd --reload
+- name: Configure firewall rules
+  become: yes
+  shell: |
+    firewall-cmd --permanent --add-service=http
+    firewall-cmd --permanent --add-service=https
+    firewall-cmd --reload
+  args:
+    executable: /bin/bash

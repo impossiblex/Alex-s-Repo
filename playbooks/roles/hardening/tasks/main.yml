@@ -1,11 +1,10 @@
 ---
 - name: Install Fail2ban and UFW
   become: true
-  dnf:
-    name:
-      - fail2ban
-      - ufw
-    state: present
+  shell: |
+    dnf install -y fail2ban ufw
+  args:
+    executable: /bin/bash
 
 - name: Configure Fail2ban local jail
   become: true
@@ -56,3 +55,56 @@
     - { regexp: 'AuthorizedKeysFile', line: 'AuthorizedKeysFile .ssh/authorized_keys' }
   notify:
     - Restart SSH
+
+- name: Install SELinux tools
+  become: true
+  shell: |
+    dnf install -y policycoreutils-python-utils setools-console
+  args:
+    executable: /bin/bash
+
+- name: Set SELinux context for user service directory
+  become: true
+  shell: |
+    semanage fcontext -a -t systemd_unit_file_t "/home/dubadub/MealManifest/paleo.io(/.*)?"
+    restorecon -Rv /home/dubadub/MealManifest/paleo.io
+  args:
+    executable: /bin/bash
+
+- name: Allow systemd user services to access Docker socket
+  become: true
+  shell: |
+    setsebool -P systemd_user_docker true
+  args:
+    executable: /bin/bash
+
+- name: Allow user services to access their own files
+  become: true
+  shell: |
+    setsebool -P user_services_use_dbus true
+  args:
+    executable: /bin/bash
+
+- name: Install and configure firewalld
+  become: true
+  shell: |
+    dnf install -y firewalld
+  args:
+    executable: /bin/bash
+
+- name: Ensure firewalld is running
+  become: true
+  systemd:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: Configure firewalld for SSH and web services
+  become: true
+  shell: |
+    firewall-cmd --permanent --add-service=ssh
+    firewall-cmd --permanent --add-service=http
+    firewall-cmd --permanent --add-service=https
+    firewall-cmd --reload
+  args:
+    executable: /bin/bash

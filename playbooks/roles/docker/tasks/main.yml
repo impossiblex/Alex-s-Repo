@@ -1,21 +1,25 @@
 ---
 - name: Make sure dnf-plugins.core installed
   become: yes
-  dnf:
-    name: dnf-plugins-core
-    state: present
+  shell: |
+    dnf install -y dnf-plugins-core
+  args:
+    executable: /bin/bash
 
 - name: Install docker repository
   become: yes
-  command: dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+  shell: |
+    # Try direct download instead of config-manager
+    curl -fsSL https://download.docker.com/linux/fedora/docker-ce.repo -o /etc/yum.repos.d/docker-ce.repo
+  args:
+    executable: /bin/bash
 
 - name: Install docker
   become: yes
-  dnf:
-    name: "{{ item }}"
-    state: present
-  with_items:
-    - docker-ce
+  shell: |
+    dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin
+  args:
+    executable: /bin/bash
 
 - name: Start Docker service
   become: yes

@@ -1,10 +1,9 @@
 - name: Install Certbot
   become: true
-  dnf:
-    name:
-      - certbot
-      - python3-certbot-nginx
-    state: present
+  shell: |
+    dnf install -y certbot python3-certbot-nginx
+  args:
+    executable: /bin/bash
 
 - name: Generate SSL certificate for
   become: true

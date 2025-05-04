@@ -1,10 +1,25 @@
 [Unit]
 Description=%i service with docker compose
+After=network-online.target
+Wants=network-online.target
 
 [Service]
+Type=simple
+User=dubadub
+Group=dubadub
 WorkingDirectory={{ deployment_root }}
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="DOCKER_HOST=unix:///var/run/docker.sock"
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
+Environment="HOME=/home/dubadub"
+Environment="USER=dubadub"
+ExecStartPre=/usr/bin/docker compose pull
 ExecStart=/usr/bin/docker compose up --remove-orphans
 ExecStop=/usr/bin/docker compose down
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=default.target

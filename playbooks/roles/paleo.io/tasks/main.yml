@@ -18,7 +18,7 @@
     src: /tmp/paleo.io/docker-compose.yml
     dest: "{{ deployment_root }}/docker-compose.yml"
   notify:
-    - Restart paleio.io
+    - Restart paleo.io
 
 
 - name: Create .env file from template
@@ -27,7 +27,7 @@
     dest: "/home/{{ ansible_user }}/paleo.io/.env"
     mode: '0644'
   notify:
-    - Restart paleio.io
+    - Restart paleo.io
 
 - name: Upload nginx configs
   become: true
@@ -36,15 +36,6 @@
     dest: "/etc/nginx/conf.d/"
   notify:
     - Restart nginx
-
-- name: Create the nginx builds directory
-  become: true
-  file:
-    path: "{{ nginx_builds_root }}"
-    state: directory
-    owner: "{{ ansible_user }}"
-    group: wwwdata
-    mode: '0775'
 
 - name: Validate nginx config
   become: true
@@ -64,8 +55,8 @@
 
 - name: Create paleo.io systemd service file
   template:
-    src: "paleio.io.service.j2"
+    src: "paleo.io.service.j2"
     dest: "/home/{{ ansible_user }}/.config/systemd/user/{{ service_name }}.service"
     mode: "0644"
   notify:
-    - Reload paleio.io
+    - Reload paleo.io
