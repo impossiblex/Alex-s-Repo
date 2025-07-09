@@ -1,4 +1,5 @@
 letsencrypt:
   domains:
     - api.paleo.io
+    - api.movewellapp.com
   email: alex@mealmanifest.com
