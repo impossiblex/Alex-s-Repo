@@ -1,0 +1,3 @@
+repo: git@github.com:joelrunyon/movewellapp-backend.git
+deployment_root: /home/dubadub/movewellapp.com
+service_name: movewellapp.com
