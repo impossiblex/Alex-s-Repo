@@ -29,6 +29,37 @@
   notify:
     - Restart movewellapp.com
 
+- name: Check if SSL certificate exists
+  become: true
+  stat:
+    path: "/etc/letsencrypt/live/api.movewellapp.com/fullchain.pem"
+  register: ssl_cert
+
+- name: Temporarily disable nginx SSL config if certificate missing
+  become: true
+  shell: |
+    if [ -f /etc/nginx/conf.d/api.movewellapp.com.conf ]; then
+      mv /etc/nginx/conf.d/api.movewellapp.com.conf /etc/nginx/conf.d/api.movewellapp.com.conf.bak
+      nginx -t && systemctl reload nginx
+    fi
+  when: not ssl_cert.stat.exists
+
+- name: Obtain SSL certificate if missing
+  become: true
+  shell: |
+    certbot certonly --standalone -d api.movewellapp.com --non-interactive --agree-tos --email {{ letsencrypt_email | default('alex@mealmanifest.com') }} --http-01-port 80
+  args:
+    creates: /etc/letsencrypt/live/api.movewellapp.com/fullchain.pem
+  when: not ssl_cert.stat.exists
+
+- name: Restore nginx SSL config if it was backed up
+  become: true
+  shell: |
+    if [ -f /etc/nginx/conf.d/api.movewellapp.com.conf.bak ]; then
+      mv /etc/nginx/conf.d/api.movewellapp.com.conf.bak /etc/nginx/conf.d/api.movewellapp.com.conf
+    fi
+  when: not ssl_cert.stat.exists
+
 - name: Upload nginx configs
   become: true
   copy:
@@ -41,10 +72,17 @@
   become: true
   shell: nginx -t
 
+- name: Renew SSL certificate if needed
+  become: true
+  shell: |
+    certbot renew --quiet --post-hook "systemctl reload nginx" || true
+
 - name: login
   shell: |
     echo "{{ docker_hub.password }}" | docker login ghcr.io --username {{ docker_hub.username }} --password-stdin
   no_log: true
+  ignore_errors: yes
+  when: docker_hub.password is defined and docker_hub.password != ""
 
 - name: Ensure that systemd dir exists
   file:

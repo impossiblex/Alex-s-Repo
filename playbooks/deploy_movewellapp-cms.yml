@@ -1,0 +1,8 @@
+- hosts: web
+  roles:
+    - movewellapp-cms
+  vars:
+    docker_hub:
+      username: dubadub
+      password: "{{ lookup('env','DOCKER_REGISTRY_PASS') }}"
+    ansible_sudo_pass: "{{ lookup('env','DUBADUB_PASS') }}"

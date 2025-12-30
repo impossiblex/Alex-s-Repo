@@ -1,0 +1,4 @@
+repo: git@github.com:joelrunyon/movewellapp-cms.git
+deployment_root: /home/dubadub/movewellapp-cms
+service_name: movewellapp-cms
+domain_name: cms.movewellapp.com
